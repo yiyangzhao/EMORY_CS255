@@ -1,0 +1,104 @@
+* ====================================================================
+* Do not touch the following xdef:
+* ====================================================================
+        xdef F
+
+
+
+* **************************************************************************
+* You can add more xdef directives above if you need more external labels
+*
+* - Remember that you can only add a label as a break point (stop location) 
+*   in EGTAPI if the label has been xdef'ed !!!
+*
+* - And I am pretty sure you will need to use break point for debugging 
+* - in this project... So add more xdef above to export your breakpoints
+* **************************************************************************
+
+F:
+
+* ********************************************************************
+* Put your (recursive) function F here 
+*
+* F receives the parameters i, j, k on the stack
+* F returns the function value in register d0
+*
+* Make sure you use the "rts" instruction to return to the caller
+* Also: Make sure you DE-ALLOCATE the local variables and restore a6
+*       BEFORE you return to the caller !!!
+* ********************************************************************
+
+Start:
+	move.l A6,-(A7)
+	move.l A7,A6
+	suba.l #8, A7
+If1:
+	move.l 16(A6),D0
+	cmp.l #0,D0
+	ble returnBasecase
+	move.l 12(A6),D0
+	cmp.l #0,D0
+	ble returnBasecase
+	bra Elseif1
+returnBasecase:
+	move.l #-1, D0
+	move.l A6,A7
+	move.l (A7)+,A6
+	rts
+
+elseif1:
+	move.l 16(A6),D0 *i
+	move.l 12(A6),D1 *j	
+	move.l 8(A6),D2	*k
+	add.l D0,D1 *D1=i+j
+	cmp.l D1,D2
+	ble elseElse
+case2rtn:
+	move.l D1,D0
+	move.l A6,A7
+	move.l (A7)+,A6
+	rts
+elseElse:
+	move.l #0,-8(A6)
+	move.l #1,-4(A6)
+forStart:
+	move.l 8(A6),D0
+	cmp.l -4(A6),D0	
+	ble endfor
+	
+	move.l -4(A6),D1
+	move.l 16(A6),D2
+	sub.l D1,D2
+	move.l D2,-(A7) *push i-t
+	move.l 12(A6),D2
+	sub.l D1,D2
+	move.l D2,-(A7) *push j-t
+	sub.l #1, D0
+	move.l D0,-(A7) *push k-1
+
+	bsr F *recursion call
+
+	adda.l #12,A7 *cleanup
+	add.l #1,D0
+
+	move.l -8(A6),D1
+	add.l D1,D0
+	move.l D0,-8(A6)
+	move.l -4(A6),D1
+	add.l #1,D1
+	move.l D1,-4(A6)
+	bra forStart
+endfor:
+
+	move.l -8(A6),D0
+	move.l A6,A7
+	move.l (A7)+,A6
+	rts
+	
+	
+
+
+*====================================================================
+* Don't add anything below this line...
+* ====================================================================
+        end
